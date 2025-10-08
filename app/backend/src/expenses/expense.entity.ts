@@ -7,6 +7,7 @@ export enum PaymentMethod {
 
 export interface Expense {
   id: string;
+  userId: string;
   date: string;
   description: string;
   categoryId: string;

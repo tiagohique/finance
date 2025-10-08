@@ -13,9 +13,10 @@ const nanoid = customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 10);
 export class ExpensesService {
   constructor(private readonly repository: ExpensesRepository) {}
 
-  async findAll(query: ExpenseQueryDto): Promise<Expense[]> {
+  async findAll(userId: string, query: ExpenseQueryDto): Promise<Expense[]> {
     const items = await this.repository.findAll();
     return items
+      .filter((item) => item.userId === userId)
       .filter((item) => {
         if (!isWithinRange(item.date, query.from, query.to)) {
           return false;
@@ -31,10 +32,11 @@ export class ExpensesService {
       .sort((a, b) => b.date.localeCompare(a.date));
   }
 
-  async create(dto: CreateExpenseDto): Promise<Expense> {
+  async create(userId: string, dto: CreateExpenseDto): Promise<Expense> {
     const items = await this.repository.findAll();
     const expense: Expense = {
       id: `exp_${nanoid()}`,
+      userId,
       ...dto,
     };
     items.push(expense);
@@ -42,21 +44,29 @@ export class ExpensesService {
     return expense;
   }
 
-  async update(id: string, dto: UpdateExpenseDto): Promise<Expense> {
+  async update(
+    userId: string,
+    id: string,
+    dto: UpdateExpenseDto,
+  ): Promise<Expense> {
     const items = await this.repository.findAll();
-    const index = items.findIndex((item) => item.id === id);
+    const index = items.findIndex(
+      (item) => item.id === id && item.userId === userId,
+    );
     if (index === -1) {
       throw new NotFoundException('Expense not found');
     }
-    const next: Expense = { ...items[index], ...dto, id };
+    const next: Expense = { ...items[index], ...dto, id, userId };
     items[index] = next;
     await this.repository.saveAll(items);
     return next;
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(userId: string, id: string): Promise<void> {
     const items = await this.repository.findAll();
-    const filtered = items.filter((item) => item.id !== id);
+    const filtered = items.filter(
+      (item) => !(item.id === id && item.userId === userId),
+    );
     if (filtered.length === items.length) {
       throw new NotFoundException('Expense not found');
     }

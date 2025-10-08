@@ -6,6 +6,7 @@ export type PaymentMethod =
 
 export interface Salary {
   id: string
+  userId: string
   year: number
   month: number
   amount: number
@@ -13,6 +14,7 @@ export interface Salary {
 
 export interface Income {
   id: string
+  userId: string
   date: string
   description: string
   categoryId: string
@@ -21,6 +23,7 @@ export interface Income {
 
 export interface Expense {
   id: string
+  userId: string
   date: string
   description: string
   categoryId: string
@@ -32,6 +35,7 @@ export interface Expense {
 
 export interface Category {
   id: string
+  userId: string
   name: string
   budget: number
 }
@@ -60,4 +64,15 @@ export interface ListParams {
   to?: string
   categoryId?: string
   recurring?: boolean
+}
+
+export interface User {
+  id: string
+  name: string
+  username: string
+}
+
+export interface AuthResponse {
+  token: string
+  user: User
 }

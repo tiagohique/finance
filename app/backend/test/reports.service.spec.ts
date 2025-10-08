@@ -33,19 +33,30 @@ const createService = (deps?: {
 
 describe('ReportsService', () => {
   it('calculates summary including salary, recurring expenses and budgets', async () => {
+    const userId = 'user-1';
     const service = createService({
       incomes: [
         {
           id: 'inc-1',
+          userId,
           date: '2025-10-10',
           description: 'Freela',
           categoryId: 'cat_extra',
           amount: 400,
         },
+        {
+          id: 'inc-ignored',
+          userId: 'user-2',
+          date: '2025-10-10',
+          description: 'Outro usuario',
+          categoryId: 'cat_extra',
+          amount: 999,
+        },
       ],
       expenses: [
         {
           id: 'exp-1',
+          userId,
           date: '2025-10-05',
           description: 'Conta de Luz',
           categoryId: 'cat_home',
@@ -55,6 +66,7 @@ describe('ReportsService', () => {
         },
         {
           id: 'exp-2',
+          userId,
           date: '2025-09-12',
           description: 'Cinema',
           categoryId: 'cat_leisure',
@@ -62,18 +74,45 @@ describe('ReportsService', () => {
           amount: 120,
           isRecurring: false,
         },
+        {
+          id: 'exp-ignored',
+          userId: 'user-2',
+          date: '2025-10-02',
+          description: 'Outro usuario',
+          categoryId: 'cat_home',
+          paymentMethod: PaymentMethod.DINHEIRO,
+          amount: 123,
+          isRecurring: false,
+        },
       ],
       categories: [
-        { id: 'cat_home', name: 'Casa', budget: 800 },
-        { id: 'cat_leisure', name: 'Lazer', budget: 300 },
-        { id: 'cat_extra', name: 'Extras', budget: 0 },
+        { id: 'cat_home', userId, name: 'Casa', budget: 800 },
+        { id: 'cat_leisure', userId, name: 'Lazer', budget: 300 },
+        { id: 'cat_extra', userId, name: 'Extras', budget: 0 },
+        { id: 'cat_other_user', userId: 'user-2', name: 'Outro', budget: 1000 },
       ],
       salaries: [
-        { id: 'sal-2025-10', year: 2025, month: 10, amount: 5000 },
+        {
+          id: 'sal_user-1_2025-10',
+          userId,
+          year: 2025,
+          month: 10,
+          amount: 5000,
+        },
+        {
+          id: 'sal_user-2_2025-10',
+          userId: 'user-2',
+          year: 2025,
+          month: 10,
+          amount: 9999,
+        },
       ],
     });
 
-    const summary = await service.getSummary({ year: 2025, month: 10 });
+    const summary = await service.getSummary(userId, {
+      year: 2025,
+      month: 10,
+    });
 
     expect(summary.incomeTotal).toBe(5400);
     expect(summary.expenseTotal).toBe(200);

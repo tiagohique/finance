@@ -9,9 +9,12 @@ import { toYearMonthKey } from '../common/utils/date.utils';
 export class SalariesService {
   constructor(private readonly repository: SalariesRepository) {}
 
-  async findAll(filter: SalariesQueryDto): Promise<Salary[]> {
+  async findAll(userId: string, filter: SalariesQueryDto): Promise<Salary[]> {
     const items = await this.repository.findAll();
     const filtered = items.filter((item) => {
+      if (item.userId !== userId) {
+        return false;
+      }
       if (filter.year && item.year !== filter.year) {
         return false;
       }
@@ -27,10 +30,11 @@ export class SalariesService {
     });
   }
 
-  async findOne(year: number, month: number): Promise<Salary> {
+  async findOne(userId: string, year: number, month: number): Promise<Salary> {
     const items = await this.repository.findAll();
     const found = items.find(
-      (item) => item.year === year && item.month === month,
+      (item) =>
+        item.userId === userId && item.year === year && item.month === month,
     );
     if (!found) {
       throw new NotFoundException('Salary not found for period');
@@ -39,20 +43,23 @@ export class SalariesService {
   }
 
   async upsert(
+    userId: string,
     year: number,
     month: number,
     dto: UpdateSalaryDto,
   ): Promise<Salary> {
     const items = await this.repository.findAll();
-    const id = `sal-${year}-${month.toString().padStart(2, '0')}`;
+    const id = `sal_${userId}_${year}-${month.toString().padStart(2, '0')}`;
     const next: Salary = {
       id,
+      userId,
       year,
       month,
       amount: dto.amount,
     };
     const index = items.findIndex(
-      (item) => item.year === year && item.month === month,
+      (item) =>
+        item.userId === userId && item.year === year && item.month === month,
     );
     if (index >= 0) {
       items[index] = next;

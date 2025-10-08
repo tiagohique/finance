@@ -1,5 +1,6 @@
 import axios from 'axios'
 import type { ApiError } from './types'
+import { useAuthStore } from '../store/useAuthStore'
 
 const baseURL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000/api'
 
@@ -9,6 +10,25 @@ export const api = axios.create({
     'Content-Type': 'application/json',
   },
 })
+
+api.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().token
+  if (token) {
+    config.headers = config.headers ?? {}
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      useAuthStore.getState().clearAuth()
+    }
+    return Promise.reject(error)
+  },
+)
 
 export const handleApiError = (error: unknown): ApiError => {
   if (axios.isAxiosError(error)) {

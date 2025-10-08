@@ -11,24 +11,31 @@ const nanoid = customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 10);
 export class CategoriesService {
   constructor(private readonly repository: CategoriesRepository) {}
 
-  async findAll(): Promise<Category[]> {
+  async findAll(userId: string): Promise<Category[]> {
     const items = await this.repository.findAll();
-    return [...items].sort((a, b) => a.name.localeCompare(b.name));
+    return items
+      .filter((item) => item.userId === userId)
+      .sort((a, b) => a.name.localeCompare(b.name));
   }
 
-  async findOne(id: string): Promise<Category> {
-    const item = await this.repository.findById(id);
+  async findOne(userId: string, id: string): Promise<Category> {
+    const items = await this.repository.findAll();
+    const item = items.find(
+      (category) => category.id === id && category.userId === userId,
+    );
     if (!item) {
       throw new NotFoundException('Category not found');
     }
     return item;
   }
 
-  async create(dto: CreateCategoryDto): Promise<Category> {
+  async create(userId: string, dto: CreateCategoryDto): Promise<Category> {
     const items = await this.repository.findAll();
-    this.ensureUniqueName(items, dto.name);
+    const scoped = items.filter((item) => item.userId === userId);
+    this.ensureUniqueName(scoped, dto.name);
     const category: Category = {
       id: `cat_${nanoid()}`,
+      userId,
       name: dto.name,
       budget: dto.budget ?? 0,
     };
@@ -37,17 +44,29 @@ export class CategoriesService {
     return category;
   }
 
-  async update(id: string, dto: UpdateCategoryDto): Promise<Category> {
+  async update(
+    userId: string,
+    id: string,
+    dto: UpdateCategoryDto,
+  ): Promise<Category> {
     const items = await this.repository.findAll();
-    const index = items.findIndex((item) => item.id === id);
+    const index = items.findIndex(
+      (item) => item.id === id && item.userId === userId,
+    );
     if (index === -1) {
       throw new NotFoundException('Category not found');
     }
     if (dto.name) {
-      this.ensureUniqueName(items.filter((item) => item.id !== id), dto.name);
+      this.ensureUniqueName(
+        items.filter(
+          (item) => item.userId === userId && item.id !== id,
+        ),
+        dto.name,
+      );
     }
     const next: Category = {
       ...items[index],
+      userId,
       ...dto,
       budget: dto.budget ?? items[index].budget,
     };
@@ -56,9 +75,11 @@ export class CategoriesService {
     return next;
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(userId: string, id: string): Promise<void> {
     const items = await this.repository.findAll();
-    const filtered = items.filter((item) => item.id !== id);
+    const filtered = items.filter(
+      (item) => !(item.id === id && item.userId === userId),
+    );
     if (filtered.length === items.length) {
       throw new NotFoundException('Category not found');
     }

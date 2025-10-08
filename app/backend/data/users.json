@@ -1,0 +1,14 @@
+[
+  {
+    "id": "usr_tiago",
+    "name": "Tiago",
+    "username": "tiago",
+    "passwordHash": "$2a$10$LZu5jDbVsdhH6u2GXKVB1etNwjkIZCQSyBNtzs26Ub0XY5q7QlnTK"
+  },
+  {
+    "id": "usr_3b2ed2gc1e",
+    "name": "Camila",
+    "username": "camila",
+    "passwordHash": "$2a$10$Z2n0oNKlyPL/VcI5kjHrUuTUZ6WpwO5NmPiLvCCKTrHOAcOr9mJf6"
+  }
+]

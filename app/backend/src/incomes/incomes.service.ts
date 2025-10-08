@@ -13,9 +13,10 @@ const nanoid = customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 10);
 export class IncomesService {
   constructor(private readonly repository: IncomesRepository) {}
 
-  async findAll(query: IncomeQueryDto): Promise<Income[]> {
+  async findAll(userId: string, query: IncomeQueryDto): Promise<Income[]> {
     const items = await this.repository.findAll();
     return items
+      .filter((item) => item.userId === userId)
       .filter((item) => {
         if (!isWithinRange(item.date, query.from, query.to)) {
           return false;
@@ -28,10 +29,11 @@ export class IncomesService {
       .sort((a, b) => b.date.localeCompare(a.date));
   }
 
-  async create(dto: CreateIncomeDto): Promise<Income> {
+  async create(userId: string, dto: CreateIncomeDto): Promise<Income> {
     const items = await this.repository.findAll();
     const income: Income = {
       id: `inc_${nanoid()}`,
+      userId,
       ...dto,
     };
     items.push(income);
@@ -39,21 +41,25 @@ export class IncomesService {
     return income;
   }
 
-  async update(id: string, dto: UpdateIncomeDto): Promise<Income> {
+  async update(userId: string, id: string, dto: UpdateIncomeDto): Promise<Income> {
     const items = await this.repository.findAll();
-    const index = items.findIndex((item) => item.id === id);
+    const index = items.findIndex(
+      (item) => item.id === id && item.userId === userId,
+    );
     if (index === -1) {
       throw new NotFoundException('Income not found');
     }
-    const next: Income = { ...items[index], ...dto, id };
+    const next: Income = { ...items[index], ...dto, id, userId };
     items[index] = next;
     await this.repository.saveAll(items);
     return next;
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(userId: string, id: string): Promise<void> {
     const items = await this.repository.findAll();
-    const filtered = items.filter((item) => item.id !== id);
+    const filtered = items.filter(
+      (item) => !(item.id === id && item.userId === userId),
+    );
     if (filtered.length === items.length) {
       throw new NotFoundException('Income not found');
     }

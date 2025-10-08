@@ -144,3 +144,74 @@ Continuar evoluindo o projeto (melhorias, correções, implementações novas) c
 Responder perguntas de manutenção/uso (ex.: rodar local, rodar testes, subir containers, liberar para rede externa, etc.).
 Garantir consistência com configurações atuais (dark mode, layout mobile, CORS, Docker builds).
 Se precisar de comandos, logs ou quaisquer detalhes específicos, pergunte. Tudo o que foi feito até agora está descrito acima.
+
+
+RAILWAY
+Resumo das Ações (Docker, Railway, CORS e Frontend)
+
+Projeto em produção no Railway:
+Backend: https://financas-backend-production.up.railway.app/api
+Frontend: https://financas-frontend-production.up.railway.app
+Imagens no Docker Hub
+
+Backend: tiagohique/financas-backend:latest
+Frontend: tiagohique/financas-frontend:latest
+Push backend:
+docker login -u tiagohique
+docker tag financas-backend:latest tiagohique/financas-backend:latest
+docker push tiagohique/financas-backend:latest
+Build/push frontend (amd64) com API da Railway:
+cd app/frontend
+docker buildx create --use --name financas-fe-builder || docker buildx use financas-fe-builder
+docker buildx build --platform linux/amd64 -t tiagohique/financas-frontend:latest --build-arg VITE_API_BASE_URL=https://financas-backend-production.up.railway.app/api --push .
+Configuração no Railway
+
+Backend (NestJS)
+Fonte: imagem tiagohique/financas-backend:latest
+Porta container: 3000 (acesso via domínio HTTPS, sem porta)
+Variáveis:
+SWAGGER_USER=admin
+SWAGGER_PASSWORD=admin123
+CORS_ORIGINS=https://financas-frontend-production.up.railway.app,http://localhost:5173,http://127.0.0.1:5173,http://localhost:3010,http://127.0.0.1:3010
+Frontend (Nginx)
+Fonte: imagem tiagohique/financas-frontend:latest
+Porta container: 80
+Se buildado no Railway pelo Dockerfile: usar build arg
+RAILWAY_BUILD_ARG_VITE_API_BASE_URL=https://financas-backend-production.up.railway.app/api
+Ajustes no repo
+
+Frontend .env atualizado para apontar à API pública:
+app/frontend/.env:1 → VITE_API_BASE_URL=https://financas-backend-production.up.railway.app/api
+Observação: não usar *.railway.internal no browser (apenas rede interna do Railway).
+Correção de CORS
+
+Causa: preflight não retornava Access-Control-Allow-Origin para o domínio do frontend.
+Solução: setar CORS_ORIGINS no backend com o domínio do frontend (e localhost para dev).
+Resultado: preflight 204 agora inclui Access-Control-Allow-Origin.
+Validações executadas
+
+Health backend: curl -s -o /dev/null -w "%{http_code}\n" https://financas-backend-production.up.railway.app/api/health → 200
+Preflight produção (agora deve conter ACAO):
+curl -i -X OPTIONS https://financas-backend-production.up.railway.app/api/categories -H "Origin: https://financas-frontend-production.up.railway.app" -H "Access-Control-Request-Method: GET"
+
+🔐 AUTENTICAÇÃO & MULTIUSUÁRIO
+- Backend agora possui módulos `users` e `auth` (JWT simples com `jsonwebtoken` + senhas usando `bcryptjs`).
+  - Endpoints principais:
+    - `POST /api/users` cadastra novo usuário (username normalizado lowercase).
+    - `POST /api/auth/login` devolve `{ token, user }`.
+    - `GET /api/auth/me` retorna usuário autenticado.
+    - `PUT /api/users/me` atualiza nome/senha.
+    - `DELETE /api/users/me` remove usuário (dados associados ficam invisíveis porque são filtrados por `userId`).
+  - `AuthGuard` globalizado protege rotas (controllers usam `@UseGuards(AuthGuard)` + `@ApiBearerAuth`).
+  - Swagger configurado com Bearer token. `JWT_SECRET` opcional via env (`default: change-me`).
+- Todas as entidades (salários, categorias, incomes, expenses) carregam `userId`. Serviços filtram por usuário e só permitem operações sobre os próprios registros.
+  - Repositórios ainda usam arquivos JSON; novos seeds em `data/users.json` com usuário padrão:
+    - Nome: Tiago / username: `tiago` / senha: `tiago123` (hash em `users.json`).
+    - Categorias e salário seed referenciam `userId: \"usr_tiago\"`.
+- Reports agora recebem `userId` para montar sumário/export e ignoram dados de outros usuários.
+- Frontend ganhou fluxo de login:
+  - Nova store `useAuthStore` (Zustand) persiste `{ token, user }` em `localStorage`.
+  - `api.ts` injeta `Authorization: Bearer <token>` e faz logout automático em `401`.
+  - Página `LoginPage` (rota `/login`) usa `authService.login` e mostra feedback via toasts.
+  - Rotas protegidas (`RequireAuth`) redirecionam para `/login` se não houver usuário autenticado.
+  - Navbar exibe o nome do usuário ativo e adiciona botão “Sair”.

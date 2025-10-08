@@ -1,47 +1,50 @@
 [
   {
     "id": "cat_moradia",
+    "userId": "usr_tiago",
     "name": "Moradia",
     "budget": 1500
   },
   {
     "id": "cat_alimentacao",
+    "userId": "usr_tiago",
     "name": "Alimentacao",
     "budget": 1200
   },
   {
     "id": "cat_transporte",
+    "userId": "usr_tiago",
     "name": "Transporte",
     "budget": 600
   },
   {
     "id": "cat_lazer",
+    "userId": "usr_tiago",
     "name": "Lazer",
     "budget": 400
   },
   {
     "id": "cat_saude",
+    "userId": "usr_tiago",
     "name": "Saude",
     "budget": 400
   },
   {
     "id": "cat_educacao",
+    "userId": "usr_tiago",
     "name": "Educacao",
     "budget": 400
   },
   {
     "id": "cat_outros",
+    "userId": "usr_tiago",
     "name": "Outros",
     "budget": 300
   },
   {
     "id": "cat_extra",
+    "userId": "usr_tiago",
     "name": "Extras",
     "budget": 0
-  },
-  {
-    "id": "cat_9fr31j6gdr",
-    "name": "Camila",
-    "budget": 12334
   }
 ]

@@ -43,13 +43,16 @@ export class ReportsService {
     private readonly salariesRepository: SalariesRepository,
   ) {}
 
-  async getSummary({ year, month }: YearMonthDto): Promise<SummaryResponse> {
+  async getSummary(
+    userId: string,
+    { year, month }: YearMonthDto,
+  ): Promise<SummaryResponse> {
     const period = { year, month };
     const [incomes, expenses, categories, salaryAmount] = await Promise.all([
-      this.getIncomesForMonth(period),
-      this.getExpensesForMonth(period),
-      this.categoriesRepository.findAll(),
-      this.getSalaryAmount(period),
+      this.getIncomesForMonth(userId, period),
+      this.getExpensesForMonth(userId, period),
+      this.getCategories(userId),
+      this.getSalaryAmount(userId, period),
     ]);
 
     const extraIncomeTotal = incomes.reduce(
@@ -71,13 +74,16 @@ export class ReportsService {
     };
   }
 
-  async exportCsv({ year, month }: YearMonthDto): Promise<string> {
+  async exportCsv(
+    userId: string,
+    { year, month }: YearMonthDto,
+  ): Promise<string> {
     const period = { year, month };
     const [incomes, expenses, categories, salary] = await Promise.all([
-      this.getIncomesForMonth(period),
-      this.getExpensesForMonth(period),
-      this.categoriesRepository.findAll(),
-      this.getSalary(period),
+      this.getIncomesForMonth(userId, period),
+      this.getExpensesForMonth(userId, period),
+      this.getCategories(userId),
+      this.getSalary(userId, period),
     ]);
 
     const categoriesMap = new Map(
@@ -123,41 +129,49 @@ export class ReportsService {
     return rows.map((columns) => columns.map(this.escapeCsv).join(',')).join('\n');
   }
 
-  private async getSalaryAmount(period: { year: number; month: number }) {
-    const salary = await this.getSalary(period);
+  private async getSalaryAmount(
+    userId: string,
+    period: { year: number; month: number },
+  ) {
+    const salary = await this.getSalary(userId, period);
     return salary?.amount ?? 0;
   }
 
-  private async getSalary(period: {
-    year: number;
-    month: number;
-  }): Promise<Salary | undefined> {
+  private async getSalary(
+    userId: string,
+    period: { year: number; month: number },
+  ): Promise<Salary | undefined> {
     const items = await this.salariesRepository.findAll();
     return items.find(
-      (item) => item.year === period.year && item.month === period.month,
+      (item) =>
+        item.userId === userId &&
+        item.year === period.year &&
+        item.month === period.month,
     );
   }
 
-  private async getIncomesForMonth(period: {
-    year: number;
-    month: number;
-  }): Promise<Income[]> {
+  private async getIncomesForMonth(
+    userId: string,
+    period: { year: number; month: number },
+  ): Promise<Income[]> {
     const start = startOfMonthIso(period);
     const end = endOfMonthIso(period);
     const items = await this.incomesRepository.findAll();
     return items
+      .filter((income) => income.userId === userId)
       .filter((income) => income.date >= start && income.date <= end)
       .sort((a, b) => a.date.localeCompare(b.date));
   }
 
-  private async getExpensesForMonth(period: {
-    year: number;
-    month: number;
-  }): Promise<ExpenseForPeriod[]> {
+  private async getExpensesForMonth(
+    userId: string,
+    period: { year: number; month: number },
+  ): Promise<ExpenseForPeriod[]> {
     const items = await this.expensesRepository.findAll();
     const totalDays = daysInMonth(period);
 
     return items
+      .filter((expense) => expense.userId === userId)
       .filter((expense) => occursInMonth(expense.date, period, expense.isRecurring))
       .map((expense) => {
         const date = parseIsoDate(expense.date);
@@ -176,6 +190,11 @@ export class ReportsService {
         return { ...expense, effectiveDate };
       })
       .sort((a, b) => a.effectiveDate.localeCompare(b.effectiveDate));
+  }
+
+  private async getCategories(userId: string): Promise<Category[]> {
+    const items = await this.categoriesRepository.findAll();
+    return items.filter((item) => item.userId === userId);
   }
 
   private buildCategorySummary(

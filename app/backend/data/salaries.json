@@ -1,8 +1,16 @@
 [
   {
-    "id": "sal-2025-10",
+    "id": "sal_usr_tiago_2025-10",
+    "userId": "usr_tiago",
     "year": 2025,
     "month": 10,
     "amount": 5000
+  },
+  {
+    "id": "sal_usr_3b2ed2gc1e_2025-10",
+    "userId": "usr_3b2ed2gc1e",
+    "year": 2025,
+    "month": 10,
+    "amount": 1
   }
 ]

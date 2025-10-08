@@ -49,6 +49,7 @@ async function bootstrap() {
     .setTitle('Personal Finance API')
     .setDescription('API documentation for the personal finance application')
     .setVersion('1.0.0')
+    .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' })
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
