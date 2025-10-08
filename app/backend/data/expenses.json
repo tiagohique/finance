@@ -1,0 +1,29 @@
+[
+  {
+    "id": "exp_kjl2mudvhu",
+    "date": "2025-09-30",
+    "description": "apartamento",
+    "categoryId": "cat_moradia",
+    "paymentMethod": "pix",
+    "amount": 1000,
+    "isRecurring": false
+  },
+  {
+    "id": "exp_v7qgcywulk",
+    "date": "2025-10-08",
+    "description": "kkkk",
+    "categoryId": "cat_9fr31j6gdr",
+    "paymentMethod": "cartao_credito",
+    "amount": 1200,
+    "isRecurring": true
+  },
+  {
+    "id": "exp_ffc8sk1jdd",
+    "date": "2025-10-08",
+    "description": "fdfd",
+    "categoryId": "cat_moradia",
+    "paymentMethod": "debito",
+    "amount": 1344,
+    "isRecurring": true
+  }
+]

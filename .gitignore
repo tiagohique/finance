@@ -1,0 +1,17 @@
+# Dependencies
+/app/backend/node_modules/
+/app/frontend/node_modules/
+
+# Build outputs
+/app/backend/dist/
+/app/frontend/dist/
+
+# Logs and coverage
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+coverage/
+
+# OS files
+.DS_Store
+

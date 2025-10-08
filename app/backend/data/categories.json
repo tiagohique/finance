@@ -1,0 +1,47 @@
+[
+  {
+    "id": "cat_moradia",
+    "name": "Moradia",
+    "budget": 1500
+  },
+  {
+    "id": "cat_alimentacao",
+    "name": "Alimentacao",
+    "budget": 1200
+  },
+  {
+    "id": "cat_transporte",
+    "name": "Transporte",
+    "budget": 600
+  },
+  {
+    "id": "cat_lazer",
+    "name": "Lazer",
+    "budget": 400
+  },
+  {
+    "id": "cat_saude",
+    "name": "Saude",
+    "budget": 400
+  },
+  {
+    "id": "cat_educacao",
+    "name": "Educacao",
+    "budget": 400
+  },
+  {
+    "id": "cat_outros",
+    "name": "Outros",
+    "budget": 300
+  },
+  {
+    "id": "cat_extra",
+    "name": "Extras",
+    "budget": 0
+  },
+  {
+    "id": "cat_9fr31j6gdr",
+    "name": "Camila",
+    "budget": 12334
+  }
+]

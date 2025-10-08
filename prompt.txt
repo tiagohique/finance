@@ -1,0 +1,146 @@
+
+
+Aqui está um prompt completo para você reutilizar em outra LLM. Copie e cole como está:
+
+Você agora assume o papel do meu assistente técnico. Preciso que continue exactamente o trabalho que já está em andamento neste projeto. Abaixo segue todo o contexto, decisões, comandos executados, ajustes feitos e o estado atual do backend NestJS e do frontend React/Vite. Utilize essas informações para responder a futuras dúvidas ou para continuar a implementação sem se perder na história.
+
+--------------------------------------------------------------------------------
+🧭 CONTEXTO GERAL
+- Projeto: aplicativo de finanças pessoais (NestJS + React/Vite + Tailwind, Zustand, Axios).
+- Estrutura básica:
+  /app/backend  → API NestJS com persistência em JSON + Swagger
+  /app/frontend → SPA React com Vite, Tailwind, Zustand (para filtros/toasts), vitest/TL para testes
+  README.md     → instruções de setup, scripts, variáveis
+
+--------------------------------------------------------------------------------
+📦 BACKEND (NestJS)
+- package.json scripts relevantes:
+  start:dev          - ts-node-dev
+  build              - tsc -p tsconfig.build.json
+  start:prod         - node dist/main.js (usa build prévio)
+  lint               - eslint "src/**/*.{ts,tsx}"
+  test               - jest
+
+- Dependências principais: @nestjs/*, class-validator/transformer, @nestjs/swagger, swagger-ui-express, express-basic-auth, rxjs, nanoid.
+- Dev deps: jest + ts-jest, eslint/prettier, typescript 5.4.5, ts-node-dev, etc.
+
+- Arquitetura:
+  - Módulos: salaries, incomes, expenses, categories, reports, health.
+  - Persistência via JsonFileRepository (que garante escrita atômica + locking leve).
+  - DTOs com class-validator; controllers com validação + Swagger.
+  - Data seeds iniciais em /app/backend/data/*.json (salários, receitas, despesas, categorias).
+
+- Ajustes importantes feitos:
+  1. JsonFileRepository corrigido para o build TypeScript (fila AsyncLock com Promise<void>).
+  2. CORS: agora aceita origens `http://localhost:5173`, `http://127.0.0.1:5173`, `http://localhost:3010`, `http://127.0.0.1:3010` e extras via env `CORS_ORIGINS`.
+  3. Swagger protegido com basic auth (`SWAGGER_USER`, `SWAGGER_PASSWORD`, default admin/admin123).
+  4. README atualizado com instruções de Docker e credenciais.
+
+- Dockerfile multi-stage (Node 20 alpine): faz npm ci, build, e copia dist + data; expõe porta 3000.
+
+- Teste automatizado disponível: test/reports.service.spec.ts.
+
+--------------------------------------------------------------------------------
+🖥️ FRONTEND (React + Vite + Tailwind)
+- package.json inclui scripts: dev, build, lint, preview, test (vitest run).
+- deps: react 19, react-router-dom 7, axios, zustand, clsx; dev deps: vite 7, vitest, Testing Library, Tailwind.
+- Tailwind configurado com tema custom e dark mode class.
+
+- Pastas principais:
+  - src/components (layout, common, tests de MonthPicker).
+  - src/pages (Dashboard, Incomes, Expenses, Categories, Reports).
+  - src/store (useFiltersStore com persistência em localStorage + expiração de 12 meses; useToastStore).
+  - src/services (api axios com handleApiError, financeService centralizando chamadas).
+  - src/utils (format, period).
+  - vitest.config.ts (novo arquivo só para testes; vite.config.ts ficou limpo para build).
+
+- Ajustes importantes feitos no frontend:
+  1. Estado global (filtros/toasts) com Zustand; filtros agora resetam para mês/ano atual se o dado salvo tiver distância > 12 meses.
+  2. MonthPicker com labels abreviadas (JAN, FEV, …) e select adaptado para mobile/desktop.
+  3. Dashboard:
+     - Cards com `overflow-hidden` e valores coloridos.
+     - Salário: formulário inline, botão para atualizar.
+     - Lista de transações com DataTable adaptada para mobile (`table-fixed`, wrap, etc.).
+     - “Gastos por categoria”: barras limitadas a 100%, trocam para vermelho quando estouram o orçamento, texto com quebra de linha e percentual abaixo (ainda precisa verificar se a largura 100% resolveu todo overflow).
+  4. Inputs form (FormInput/MoneyInput) tratam modo escuro com `dark:bg-slate-900 dark:text-slate-100`.
+  5. Navbar: botão “≡”, botão Dashboard (Link para home), ThemeToggle com Zustand + localStorage.
+  6. Tabelas & layout: DataTable com `w-full` e `max-w-full`, AppLayout com container responsivo multi-breakpoint.
+  7. MonthPicker também permite wrap nos controles; body tem `overflow-x-hidden`.
+  8. Teste React: `MonthPicker.test.tsx` (Vitest + Testing Library). Config de compilação exclui arquivos de teste via tsconfig.app.json.
+
+- Dockerfile para frontend:
+  - Stage Node 20 alpine (npm ci, build com VITE_API_BASE_URL).
+  - Stage nginx 1.27 alpine copiando dist para /usr/share/nginx/html.
+  - Lembrar de build arg `VITE_API_BASE_URL=http://host.docker.internal:3000/api`.
+
+- `.env` (ou `.env.local`) deve ter `VITE_API_BASE_URL=http://localhost:3000/api` quando rodando sem Docker.
+
+--------------------------------------------------------------------------------
+⚙️ EXECUÇÃO LOCAL (sem Docker)
+- Backend:
+  ```bash
+  cd app/backend
+  npm install
+  npm run start:dev
+  # Porta 3000
+Swagger: http://localhost:3000/api/docs (admin/admin123).
+
+Frontend:
+
+cd app/frontend
+npm install
+npm run dev
+# Porta 5173
+Antes: garantir .env com VITE_API_BASE_URL=http://localhost:3000/api.
+
+Para acessar via celular na mesma rede:
+
+Descobrir IP do Mac (ipconfig getifaddr en0).
+Backend: CORS_ORIGINS=http://<IP>:5173 npm run start:dev.
+Frontend: .env com VITE_API_BASE_URL=http://<IP>:3000/api, rodar npm run dev -- --host 0.0.0.0.
+Abrir no celular: http://<IP>:5173.
+Parar processos: Ctrl+C. Tests: backend npm run test; frontend npm run test.
+
+🐳 EXECUÇÃO COM DOCKER
+
+Backend:
+cd app/backend
+docker build -t financas-backend .
+docker run --name financas-backend -p 3000:3000 \
+  -e SWAGGER_USER=admin \
+  -e SWAGGER_PASSWORD=admin123 \
+  financas-backend
+Frontend:
+cd app/frontend
+docker build -t financas-frontend \
+  --build-arg VITE_API_BASE_URL=http://host.docker.internal:3000/api .
+docker run --name financas-frontend -p 3010:80 financas-frontend
+Ajustar portas mudando o primeiro valor de -p externa:interna (ex.: backend -p 8080:3000, frontend -p 8081:80).
+Checar fatores de contexto do Docker (imagens rodando, containers, etc.).
+🛠️ CORREÇÕES & BUGS RESOLVIDOS
+
+Backend: problema de build TS (AsyncLock) ajustado.
+Swagger protegido com basic auth.
+CORS liberado para 5173/3010 e variáveis extras.
+Frontend: layout mobile (tabelas/cards/MonthPicker) adaptado; barra de categoria; inputs com texto branco no dark mode.
+Filtro de datas: reseta se valor salvo antigo demais.
+Docker builds funcionais tanto backend quanto frontend.
+Acesso via host.docker.internal para comunicar contêiner frontend → backend.
+🚧 PONTOS A MONITORAR
+
+Layout “Gastos por categoria” ainda pode sofrer se o viewport for muito estreito; verificar se o overflow foi totalmente resolvido agora.
+Sempre rebuildar e subir containers após mudanças (desligar com docker stop; docker rm se precisar recriar).
+Garantir que npm run dev do Vite rode com --host 0.0.0.0 ao testar em dispositivos externos.
+Atualizar CORS_ORIGINS quando usar IPs ou domínios diferentes do que já está listado.
+📁 ARQUIVOS CHAVE (referências rápidas)
+
+Backend: src/main.ts, src/common/file-db/json-file.repository.ts, src/reports/reports.service.ts, package.json, Dockerfile.
+Frontend: src/pages/DashboardPage.tsx, src/components/common/Card.tsx, src/components/common/DataTable.tsx, src/components/common/FormInput.tsx, src/components/layout/AppLayout.tsx, src/store/useFiltersStore.ts, src/services/financeService.ts, vite.config.ts, vitest.config.ts, Dockerfile.
+Testes: test/reports.service.spec.ts (backend), src/components/common/__tests__/MonthPicker.test.tsx (frontend).
+Docs: README.md (setup completo + docker instructions).
+📝 OBJETIVO PARA A NOVA LLM
+
+Continuar evoluindo o projeto (melhorias, correções, implementações novas) com base nesse histórico.
+Responder perguntas de manutenção/uso (ex.: rodar local, rodar testes, subir containers, liberar para rede externa, etc.).
+Garantir consistência com configurações atuais (dark mode, layout mobile, CORS, Docker builds).
+Se precisar de comandos, logs ou quaisquer detalhes específicos, pergunte. Tudo o que foi feito até agora está descrito acima.
