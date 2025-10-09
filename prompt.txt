@@ -215,3 +215,50 @@ curl -i -X OPTIONS https://financas-backend-production.up.railway.app/api/catego
   - Página `LoginPage` (rota `/login`) usa `authService.login` e mostra feedback via toasts.
   - Rotas protegidas (`RequireAuth`) redirecionam para `/login` se não houver usuário autenticado.
   - Navbar exibe o nome do usuário ativo e adiciona botão “Sair”.
+Estado Atual do Projeto
+
+Arquitetura: NestJS backend + React/Vite frontend com Tailwind, Zustand, Axios, Vitest. Persistência em arquivos JSON.
+
+Autenticação:
+
+Novo módulo users (CRUD via /api/users, /api/users/me) com senhas em bcryptjs, seed em data/users.json.
+Novo módulo auth com JWT (jsonwebtoken) e guard global. Endpoints: /api/auth/login, /api/auth/me.
+Swagger exige Bearer token; JWT_SECRET/JWT_EXPIRES_IN configuráveis.
+Todos os domínios (incomes, expenses, categories, salaries, reports) recebem userId e operam apenas sobre dados do usuário logado.
+Seeds padrão referenciam usr_tiago; senha tiago123.
+Frontend:
+
+Store useAuthStore (Zustand) persiste {user, token} em localStorage.
+Interceptador Axios injeta Authorization e faz logout em 401.
+Rotas protegidas em App.tsx, página de login (/login) com toasts.
+Navbar mostra nome do usuário e aciona menu lateral mobile.
+Sidebar inclui botão “Sair” + ícones Material Symbols para Dashboard, Entradas, Saídas, Categorias, Relatórios.
+CSS ajustado para exibir os ícones (.material-symbols-rounded) e z-index do sidebar aumentado para sobrepor o header.
+Infra/Docker:
+
+Backend Dockerfile multi-stage (Node 20 Alpine) com npm ci, build e npm ci --omit=dev.
+Frontend Dockerfile: build em Node 20 + Nginx 1.27; VITE_API_BASE_URL passado via build arg.
+Comandos docker buildx build --platform linux/amd64 ... --push documentados e testados (backend/front).
+Railway: backend exposto em https://financas-backend-production.up.railway.app/api (CORS configurado); frontend serve via Nginx apontando para o backend. Variáveis CORS_ORIGINS contemplam Railway + localhost.
+Testes:
+
+Backend: npm test (Jest) com reports.service.spec.ts atualizado para validar userId.
+Frontend: npm run test (Vitest) ok.
+Documentação & Prompt:
+
+prompt.txt atualizado com resumo Railway + seção “🔐 AUTENTICAÇÃO & MULTIUSUÁRIO”.
+Outros ajustes:
+
+Login page estilizada; MonthPicker, toasts, etc. seguem funcionando.
+Sidebar mobile agora usa z-50 para ficar acima do header.
+app/frontend/.env aponta para backend atual (https://financas-backend-production.up.railway.app/api, comentar/descomentar conforme ambiente).
+Credenciais Dev
+
+Usuário seed: tiago / tiago123.
+Build/Run
+
+Backend local: cd app/backend && npm install && npm run start:dev.
+Frontend local: cd app/frontend && npm install && npm run dev (com .env local http://localhost:3000/api).
+Docker build amd64:
+Backend: docker buildx build --platform linux/amd64 -t tiagohique/financas-backend:latest --push .
+Frontend: docker buildx build --platform linux/amd64 -t tiagohique/financas-frontend:latest --build-arg VITE_API_BASE_URL=https://financas-backend-production.up.railway.app/api --push .
