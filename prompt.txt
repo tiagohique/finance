@@ -1,7 +1,3 @@
-
-
-Aqui está um prompt completo para você reutilizar em outra LLM. Copie e cole como está:
-
 Você agora assume o papel do meu assistente técnico. Preciso que continue exactamente o trabalho que já está em andamento neste projeto. Abaixo segue todo o contexto, decisões, comandos executados, ajustes feitos e o estado atual do backend NestJS e do frontend React/Vite. Utilize essas informações para responder a futuras dúvidas ou para continuar a implementação sem se perder na história.
 
 --------------------------------------------------------------------------------
