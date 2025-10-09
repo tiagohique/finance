@@ -1,0 +1,2 @@
+financas-backend-production.up.railway.app
+CORS_ORIGINS=https://financas-frontend-production.up.railway.app

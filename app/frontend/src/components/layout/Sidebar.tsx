@@ -3,11 +3,11 @@ import clsx from 'clsx'
 import { useAuthStore } from '../../store/useAuthStore'
 
 const links = [
-  { to: '/', label: 'Dashboard' },
-  { to: '/incomes', label: 'Entradas' },
-  { to: '/expenses', label: 'Saidas' },
-  { to: '/categories', label: 'Categorias' },
-  { to: '/reports', label: 'Relatorios' },
+  { to: '/', label: 'Dashboard', icon: 'space_dashboard' },
+  { to: '/incomes', label: 'Entradas', icon: 'trending_up' },
+  { to: '/expenses', label: 'Saidas', icon: 'trending_down' },
+  { to: '/categories', label: 'Categorias', icon: 'category' },
+  { to: '/reports', label: 'Relatorios', icon: 'monitoring' },
 ]
 
 interface SidebarProps {
@@ -28,7 +28,7 @@ export const Sidebar = ({ visible, onClose }: SidebarProps) => {
   return (
     <aside
       className={clsx(
-        'fixed inset-y-0 left-0 z-30 w-64 border-r border-slate-200 bg-white px-4 py-6 transition-transform duration-200 ease-in-out md:static md:translate-x-0 dark:border-slate-800 dark:bg-slate-900',
+        'fixed inset-y-0 left-0 z-50 w-64 border-r border-slate-200 bg-white px-4 py-6 transition-transform duration-200 ease-in-out md:static md:translate-x-0 dark:border-slate-800 dark:bg-slate-900',
         {
           '-translate-x-full': !visible,
           'translate-x-0': visible,
@@ -44,14 +44,17 @@ export const Sidebar = ({ visible, onClose }: SidebarProps) => {
             onClick={onClose}
             className={({ isActive }) =>
               clsx(
-                'rounded-lg px-3 py-2 text-sm font-medium transition',
+                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition',
                 isActive
                   ? 'bg-brand-50 text-brand-700 dark:bg-brand-500/20 dark:text-brand-200'
                   : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800',
               )
             }
           >
-            {link.label}
+            <span className="material-symbols-rounded text-lg">
+              {link.icon}
+            </span>
+            <span>{link.label}</span>
           </NavLink>
         ))}
 
@@ -59,9 +62,10 @@ export const Sidebar = ({ visible, onClose }: SidebarProps) => {
         <button
           type="button"
           onClick={handleLogout}
-          className="rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+          className="flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
         >
-          Sair
+          <span className="material-symbols-rounded text-lg">logout</span>
+          <span>Sair</span>
         </button>
       </nav>
     </aside>
